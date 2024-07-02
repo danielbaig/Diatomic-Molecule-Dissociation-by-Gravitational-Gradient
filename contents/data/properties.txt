@@ -1,0 +1,30 @@
+# moleculeLength [double]
+1e-2
+
+# numParticles [unsigned int]
+1
+# particle masses (delimit by commas) [double]
+1e-10
+# particle electric charges (delimit by commas) [double]
+1e-16
+# particle energies (delimit by commas) [double]
+25.
+# particle angular momenta (delimit by commas) [double]
+1.5e+1
+# particle start times (delimit by commas) [double]
+0.
+# particle start radii (delimit by commas) [double]
+10.
+# particle start phis (delimit by commas) [double]
+0.
+# particle start thetas (delimit by commas) [double]
+1.57079632679
+
+# Black hole mass [double]
+1.
+# Black hole angular momentum to mass ratio-ish (a) [double]
+1e-1
+# Black hole gravitomagnetic monopole moment (l) [double]
+0.
+# Black hole electric charge (Q) [double]
+-1e-5
