@@ -9,6 +9,10 @@
 
 #include "Eigen/Dense"
 
+#include "blackHole.h"
+#include "particle.h"
+#include "eulerLagrange.h"
+
 
 
 /*
@@ -18,44 +22,9 @@ Physical Review D. 2016 May 15;93(10):104031.
 */
 
 
-constexpr double epsilon_0{ 8.85e-12 };
+const double epsilon_0{ 1. / (4.*M_PI)}; // Geometrised-Gaussian units.
 
-struct BlackHole
-{
-    const double mass{ 0. };
-    const double a{ 0. }; // angular momentum to mass ratio-ish
-    const double l{ 0. }; // gravitomagnetic monopole moment
-    const double charge{ 0. }; // electric charge
 
-    const double l2{ l * l };
-    const double a2{ a * a };
-    const double charge2{ charge * charge };
-};
-
-struct Particle
-{
-    const double mass{ 0. };
-    const double charge{ 0. }; // electric charge
-    const double L{ 0. }; // angular momentum
-    const double energy{ 0. };
-
-    double t_prev{ 0. };
-    double r_prev{ 0. };
-    double phi_prev{ 0. };
-    double theta_prev{ 0. };
-
-    double t{ 0. };
-    double r{ 0. };
-    double phi{ 0. };
-    double theta{ 0. };
-
-    double mass2{ mass * mass };
-    double L_bar{ L / mass };
-    double energy_bar{ energy / mass };
-    double charge_bar{ charge / mass };
-
-    double r2{ r * r };
-};
 
 double sigma(const BlackHole* BH, Particle* p)
 {
@@ -209,7 +178,7 @@ double f_theta(const BlackHole* BH, Particle* p, const double sigma_p, const dou
 }
 
 
-void eulerMove(const BlackHole* BH, Particle* p,
+void eulerMove(const BlackHole* BH, Particle* p, Particle* ps,
     const bool isPlaner, const double dlambda)
 {
     /*
@@ -229,6 +198,7 @@ void eulerMove(const BlackHole* BH, Particle* p,
     const double chi_p{ chi(BH, p) };
     const double delta_p{ delta(BH, p) };
 
+    /*
     double dt{ dlambda * P_t(BH, p, sintheta, chi_p, delta_p, ral_sqr, isPlaner) };
     double dphi{ dlambda * P_phi(BH, p, sintheta, chi_p, delta_p, ral_sqr, isPlaner) };
 
@@ -237,18 +207,36 @@ void eulerMove(const BlackHole* BH, Particle* p,
     double next_theta{ 2 * p->theta - p->theta_prev + dlambda * dlambda * f_theta(BH,
         p, sigma_p, delta_p,
         chi_p,  ral_sqr, dlambda) };
+    */
+
+
+
+
+    double dt{};
+    double dphi{};
+    double next_r{};
+    double next_theta{};
+
+
+    std::tie(dt, next_r, dphi, next_theta) = eulerMoveMathematica(BH,
+        p, ps,
+        sigma_p, delta_p, chi_p, dlambda);
 
     // Perform update.
+    p->t_prevprev = p->t_prev;
     p->t_prev = p->t;
     p->t += dt;
 
+    p->r_prevprev = p->r_prev;
     p->r_prev = p->r;
     p->r = next_r;
     p->r2 = p->r * p->r;
 
+    p->phi_prevprev = p->phi_prev;
     p->phi_prev = p->phi;
     p->phi += dphi;
 
+    p->theta_prevprev = p->theta_prev;
     p->theta_prev = p->theta;
     p->theta = next_theta;
 }
@@ -413,15 +401,16 @@ int main()
 
     const BlackHole BH{ BH_mass, BH_a, BH_l, BH_charge };
     Particle particle1{ mass1, electricCharge1, angularMomentum1, energy1, startTime1,
-        startRadius1, startPhi1, startTheta1, startTime1,
         startRadius1, startPhi1, startTheta1 };
 
+    Particle particle2{ 1., 0., 0., 0., 0., 1., 0., 0. };
 
 
 
-    constexpr double dlambda{ 5e-16 };
-    double r_dot0{ 1e+5 };
-    double theta_dot0{ 1e+10 };
+
+    constexpr double dlambda{ 1e-3 };
+    double r_dot0{ 0. };
+    double theta_dot0{ 0. };
     // First step must be done manually to account for initial conditions.
     const double sintheta{ sin(particle1.theta) };
     const double ral_sqr{ particle1.r_prev*particle1.r_prev + BH.a2 + BH.l2 };
@@ -429,6 +418,35 @@ int main()
     const double chi_p{ chi(&BH, &particle1) };
     const double delta_p{ delta(&BH, &particle1) };
 
+
+    double dt{};
+    double dphi{};
+    double next_r{};
+    double next_theta{};
+
+
+    std::tie(dt, next_r, dphi, next_theta) = eulerMoveMathematica(&BH,
+        &particle1, &particle2,
+        sigma_p, delta_p, chi_p, dlambda);
+
+
+    particle1.t_prev = particle1.t_prevprev + dt;
+    particle1.phi_prev = particle1.phi_prevprev + dphi;
+
+    particle1.r_prev = particle1.r_prevprev + dlambda * r_dot0 + next_r - (2 * particle1.r_prev - particle1.r_prevprev);
+    particle1.theta_prev = particle1.theta_prevprev + dlambda * theta_dot0 
+        + next_theta - (2 * particle1.theta_prev - particle1.theta_prevprev);
+
+
+
+    particle1.t = particle1.t_prev + dt;
+    particle1.phi = particle1.phi_prev + dphi;
+
+    particle1.r = particle1.r_prev + dlambda * r_dot0 + next_r - (2 * particle1.r - particle1.r_prev);
+    particle1.theta = particle1.theta_prev + dlambda * theta_dot0 
+        + next_theta - (2 * particle1.theta - particle1.theta_prev);
+
+    /*
     particle1.t = particle1.t_prev + dlambda * P_t(&BH, &particle1, sintheta,
         chi_p, delta_p, ral_sqr, isPlaner);
     particle1.phi = particle1.phi_prev +  dlambda * P_phi(&BH, &particle1, sintheta,
@@ -440,14 +458,19 @@ int main()
     particle1.theta = particle1.theta_prev + dlambda * theta_dot0 + dlambda * dlambda 
         * f_theta(&BH, &particle1, sigma_p, delta_p,
         chi_p, ral_sqr, dlambda);
+    */
 
 
-
-    std::cout << particle1.r << ',' << particle1.phi << '\n';
 
     std::cout << "energy: " << energy1 << '\n';
     const double r_Q2{ BH.charge * BH.charge / (4. * M_PI * epsilon_0) };
     const double r_s{ 2. * BH.mass };
+    if (r_s * r_s / 4. - BH.a * BH.a - r_Q2 < 0)
+    {
+        std::cout << "Error: r_s*r_s / 4. - BH.a*BH.a - r_Q2 < 0 has been violated.\n";
+        std::cout << r_s * r_s / 4. - BH.a * BH.a - r_Q2 << ">=0\n";
+        throw;
+    }
 
     // File setup.
     FILE* coords_TXT = NULL;
@@ -470,12 +493,19 @@ int main()
             particle1.r, particle1.phi, particle1.theta);
         
 
-        eulerMove(&BH, &particle1, false, dlambda);
+        eulerMove(&BH, &particle1, &particle2, false, dlambda);
 
 
         if (particle1.r < r_s / 2. + sqrt(r_s * r_s / 4. - BH.a2 - r_Q2))
         {
             std::cout << "Entered outer horizon.\n";
+            printf("%lf,%lf,%lf,%lf\n", particle1.t,
+                particle1.r, particle1.phi, particle1.theta);
+            break;
+        }
+        else if (particle1.r > startRadius1)
+        {
+            std::cout << "Particle has escaped.\n";
             printf("%lf,%lf,%lf,%lf\n", particle1.t,
                 particle1.r, particle1.phi, particle1.theta);
             break;

@@ -6,11 +6,11 @@
 # particle masses (delimit by commas) [double]
 1e-10
 # particle electric charges (delimit by commas) [double]
-1e-16
+0.
 # particle energies (delimit by commas) [double]
-25.
+1.
 # particle angular momenta (delimit by commas) [double]
-1.5e+1
+1e+1
 # particle start times (delimit by commas) [double]
 0.
 # particle start radii (delimit by commas) [double]
@@ -23,8 +23,8 @@
 # Black hole mass [double]
 1.
 # Black hole angular momentum to mass ratio-ish (a) [double]
-1e-1
+5e-1
 # Black hole gravitomagnetic monopole moment (l) [double]
 0.
 # Black hole electric charge (Q) [double]
--1e-5
+5e-1
