@@ -363,7 +363,7 @@ int main()
 
 
 
-    const cpp_dec_float_25 dlambda{ 1e-6 }; // Minkowski: 1e-6
+    const cpp_dec_float_25 dlambda{ 1e-1 }; // Minkowski: 1e-6
     const cpp_dec_float_25 r_dot0{ 0. };// -1e-6};
     const cpp_dec_float_25 phi_dot0{ 0. };//-1e-2 };
     const cpp_dec_float_25 theta_dot0{ 0. };

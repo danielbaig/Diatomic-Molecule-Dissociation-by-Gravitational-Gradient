@@ -9,7 +9,7 @@
 # particle start time [double] [s]
 0.
 # particle start radius [double] [Gm]
-13.
+12.691
 # particle start phi [double] [rad]
 0.
 # particle start theta [double] [rad]
