@@ -52,6 +52,18 @@ cpp_dec_float_25 chi(const BlackHole* BH, Particle* p)
 void updateCoordinates(Particle* p, const cpp_dec_float_25 next_t, const cpp_dec_float_25 next_r,
     const cpp_dec_float_25 next_phi, const cpp_dec_float_25 next_theta)
 {
+    /*
+    Update the coordinates to the new values.
+
+    Inputs:
+        - Particle* p: Instance of the particle which coordinates have changed.
+        - const cpp_dec_float_25 next_t: Next time.
+        - const cpp_dec_float_25 next_r: Next radius.
+        - const cpp_dec_float_25 next_phi: Next phi.
+        - const cpp_dec_float_25 next_theta: Next theta.
+
+    */
+
     // Perform update.
     p->t_prevprev = p->t_prev;
     p->t_prev = p->t;
@@ -85,8 +97,8 @@ void eulerMove(const BlackHole* BH, Particle* p1, Particle* p2, const cpp_dec_fl
 
     Inputs:
        - const BlackHole* BH: Instance of the black hole.
-       - Particle* p: Instance of the particle.
-       - const bool isPlaner: Whether planer orbit condition is met.
+       - Particle* p1: Instance of the first particle.
+       - Particle* p2: Instance of the second particle.
        - const double dlambda: Simulation affine parameter step.
     */
 
@@ -140,6 +152,21 @@ void setupInitialStep(Particle* p, const cpp_dec_float_25 next_t, const cpp_dec_
     const cpp_dec_float_25 next_phi, const cpp_dec_float_25 next_theta, const cpp_dec_float_25 dlambda,
     const cpp_dec_float_25 r_dot0, const cpp_dec_float_25 phi_dot0, const cpp_dec_float_25 theta_dot0)
 {
+    /*
+    Perform the first step incorporating the initial velocity conditions.
+
+    Inputs:
+        - Particle* p: Particle to move.
+        - const cpp_dec_float_25 next_t: Next time.
+        - const cpp_dec_float_25 next_r: Next radius.
+        - const cpp_dec_float_25 next_phi: Next phi.
+        - const cpp_dec_float_25 next_theta: Next theta.
+        - const cpp_dec_float_25 dlambda: Lambda step.
+        - const cpp_dec_float_25 r_dot0: Initial radial velocity.
+        - const cpp_dec_float_25 phi_dot0: Initial azimuthal velocity.
+        - const cpp_dec_float_25 theta_dot0: Initial polar velocity.
+    */
+
     p->t_prev = p->t_prevprev + dlambda * 1. + next_t
         - (2. * p->t_prev - p->t_prevprev);
     p->phi_prev = p->phi_prevprev + dlambda * phi_dot0 + next_phi
@@ -175,6 +202,19 @@ void setupInitialStep(Particle* p, const cpp_dec_float_25 next_t, const cpp_dec_
 void applyInitialConditions(const BlackHole* BH, Particle* p1, Particle* p2, cpp_dec_float_25 dlambda,
     cpp_dec_float_25 r_dot0, cpp_dec_float_25 phi_dot0, cpp_dec_float_25 theta_dot0)
 {
+    /*
+    Perform the update for the initial step.
+
+    Inputs:
+       - const BlackHole* BH: Instance of the black hole.
+       - Particle* p1: Instance of the first particle.
+       - Particle* p2: Instance of the second particle.
+       - const double dlambda: Simulation affine parameter step.
+       - const cpp_dec_float_25 r_dot0: Initial radial velocity.
+       - const cpp_dec_float_25 phi_dot0: Initial azimuthal velocity.
+       - const cpp_dec_float_25 theta_dot0: Initial polar velocity.
+    */
+
     // First step must be done manually to account for initial conditions.
     const cpp_dec_float_25 sigma_p1{ sigma(BH, p1) };
     const cpp_dec_float_25 chi_p1{ chi(BH, p1) };
@@ -232,6 +272,7 @@ int main()
     cpp_dec_float_25 BH_l{};
     cpp_dec_float_25 BH_charge{};
 
+    // Conversions.
     const cpp_dec_float_25 kg_to_m{ 1. / 1.3466e+27 };
     const cpp_dec_float_25 eV_to_m{ 1.602176634e-19 / 1.2102e+44 };
     const cpp_dec_float_25 e_to_1{ 1.602176634e-19 / 5.2909e-19 };
@@ -343,7 +384,7 @@ int main()
 
 
     }
-    cpp_dec_float_25 moleculeLength{ 1.12246204831 * sigma0};
+    cpp_dec_float_25 moleculeLength{ 1.12246204831 * sigma0}; // 2^1/6 * sigma
 
 
     if (BH_a * BH_a + BH_charge * BH_charge > BH_mass * BH_mass)
@@ -363,7 +404,7 @@ int main()
 
 
 
-    const cpp_dec_float_25 dlambda{ 1e-1 }; // Minkowski: 1e-6
+    const cpp_dec_float_25 dlambda{ 1e+0 }; // Minkowski: 1e-6
     const cpp_dec_float_25 r_dot0{ 0. };// -1e-6};
     const cpp_dec_float_25 phi_dot0{ 0. };//-1e-2 };
     const cpp_dec_float_25 theta_dot0{ 0. };
@@ -398,7 +439,7 @@ int main()
     coords2_TXT << std::setprecision(25) << std::fixed;
 
     // Loop variables.
-    constexpr unsigned int maxStep{ static_cast<unsigned int>(1e+3) };
+    constexpr unsigned int maxStep{ static_cast<unsigned int>(1e+3) }; // Debug 1e+3
     const unsigned int period{ maxStep / 10 };
     unsigned int step{ 0 };
     cpp_dec_float_25 lambda{ 0 };
