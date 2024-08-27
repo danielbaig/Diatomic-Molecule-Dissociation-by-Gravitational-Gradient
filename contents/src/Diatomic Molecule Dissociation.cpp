@@ -8,7 +8,7 @@
 #define _USE_MATH_DEFINES
 #include "math.h"
 
-#include "Eigen/Dense"
+//#include "Eigen/Dense"
 #include <boost/multiprecision/cpp_dec_float.hpp>
 using namespace boost::multiprecision;
 using cpp_dec_float_25 = number<cpp_dec_float<25>>;
@@ -266,6 +266,8 @@ int main()
     cpp_dec_float_25 startRadius1{};
     cpp_dec_float_25 startPhi1{};
     cpp_dec_float_25 startTheta1{};
+    cpp_dec_float_25 dphi{};
+    cpp_dec_float_25 drCoeff{};
 
     cpp_dec_float_25 BH_mass{};
     cpp_dec_float_25 BH_a{};
@@ -345,6 +347,18 @@ int main()
             ++lineCount;
             startTheta1 = std::stod(line);
         }
+        else if (line == "# particle dphi [double] [rad]")
+        {
+            propertiesFile >> line;
+            ++lineCount;
+            dphi = std::stod(line);
+        }
+        else if (line == "# particle dr/moleculeLength [double]")
+        {
+            propertiesFile >> line;
+            ++lineCount;
+            drCoeff = std::stod(line);
+        }
 
         // Black hole properties
         else if (line == "# Black hole mass [double] [sol]")
@@ -385,6 +399,7 @@ int main()
 
     }
     cpp_dec_float_25 moleculeLength{ 1.12246204831 * sigma0}; // 2^1/6 * sigma
+    std::cout << "Molecule length: " << moleculeLength << '\n';
 
 
     if (BH_a * BH_a + BH_charge * BH_charge > BH_mass * BH_mass)
@@ -400,11 +415,11 @@ int main()
         startRadius1, startPhi1, startTheta1 };
 
     Particle particle2{ mass, epsilon, sigma0, electricCharge, startTime1,
-        startRadius1 + 1.1*moleculeLength, startPhi1, startTheta1 };
+        startRadius1 + drCoeff*moleculeLength, startPhi1 + dphi, startTheta1 };
 
 
 
-    const cpp_dec_float_25 dlambda{ 1e+0 }; // Minkowski: 1e-6
+    const cpp_dec_float_25 dlambda{ 1e-5 }; // Minkowski: 1e-6 bg: 1e-3
     const cpp_dec_float_25 r_dot0{ 0. };// -1e-6};
     const cpp_dec_float_25 phi_dot0{ 0. };//-1e-2 };
     const cpp_dec_float_25 theta_dot0{ 0. };
@@ -460,6 +475,13 @@ int main()
         fprintf(coords2_TXT, "%.25lf,%.25lf,%.25lf,%.25lf,%.25lf\n", lambda, particle2.t,
             particle2.r, particle2.phi, particle2.theta);
         */
+
+        if (abs(particle1.phi) > 10 || abs(particle2.phi) > 10)
+        {
+            std::cout << "Error: phi has become unusually large.\n";
+            break;
+        }
+
         coords1_TXT << lambda << ',' << particle1.t << ',' << particle1.r << ','
             << particle1.phi << ',' << particle1.theta << '\n';
         coords2_TXT << lambda << ',' << particle2.t << ',' << particle2.r << ','
