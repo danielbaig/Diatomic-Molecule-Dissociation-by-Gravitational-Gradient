@@ -266,6 +266,9 @@ int main()
     cpp_dec_float_25 startRadius1{};
     cpp_dec_float_25 startPhi1{};
     cpp_dec_float_25 startTheta1{};
+    cpp_dec_float_25 r_dot0{};
+    cpp_dec_float_25 phi_dot0{};
+    cpp_dec_float_25 theta_dot0{};
     cpp_dec_float_25 dphi{};
     cpp_dec_float_25 drCoeff{};
 
@@ -347,6 +350,24 @@ int main()
             ++lineCount;
             startTheta1 = std::stod(line);
         }
+        else if (line == "# particle r_dot0 [double] [ms^-1 / c]")
+        {
+            propertiesFile >> line;
+            ++lineCount;
+            r_dot0 = std::stod(line);
+        }
+        else if (line == "# particle phi_dot0 [double] [rad s^-1]")
+        {
+            propertiesFile >> line;
+            ++lineCount;
+            phi_dot0 = std::stod(line);
+        }
+        else if (line == "# particle theta_dot0 [double] [rad s^-1]")
+        {
+            propertiesFile >> line;
+            ++lineCount;
+            theta_dot0 = std::stod(line);
+        }
         else if (line == "# particle dphi [double] [rad]")
         {
             propertiesFile >> line;
@@ -407,6 +428,20 @@ int main()
         std::cout << "Warning: No horizon present.\n";
     }
 
+    const cpp_dec_float_25 speed0{ r_dot0 * r_dot0 + startRadius1 * startRadius1 * (theta_dot0 * theta_dot0
+        + sin(startTheta1) * sin(startTheta1) * phi_dot0 * phi_dot0) };
+
+
+    if (speed0 > 1)
+    {
+        std::cout << "Warning: Travelling faster than the speed of light.\n";
+    }
+    else if (speed0 != 1 && mass == 0)
+    {
+        std::cout << "Warning: Light-like particle is not moving at light speed.\n";
+    }
+
+    std::cout << "speed0: " << speed0 << "c\n";
 
 
 
@@ -419,10 +454,7 @@ int main()
 
 
 
-    const cpp_dec_float_25 dlambda{ 1e-5 }; // Minkowski: 1e-6 bg: 1e-3
-    const cpp_dec_float_25 r_dot0{ 0. };// -1e-6};
-    const cpp_dec_float_25 phi_dot0{ 0. };//-1e-2 };
-    const cpp_dec_float_25 theta_dot0{ 0. };
+    const cpp_dec_float_25 dlambda{ 1e-3 }; // Minkowski: 1e-6 bg: 1e-3
     applyInitialConditions(&BH, &particle1, &particle2, dlambda, r_dot0, phi_dot0, theta_dot0);
 
 
@@ -454,10 +486,11 @@ int main()
     coords2_TXT << std::setprecision(25) << std::fixed;
 
     // Loop variables.
-    constexpr unsigned int maxStep{ static_cast<unsigned int>(1e+3) }; // Debug 1e+3
+    constexpr unsigned int maxStep{ static_cast<unsigned int>(1e+4) }; // Debug 1e+3
     const unsigned int period{ maxStep / 10 };
     unsigned int step{ 0 };
     cpp_dec_float_25 lambda{ 0 };
+    cpp_dec_float_25 separation{};
 
 
     while (step < maxStep)
@@ -479,6 +512,18 @@ int main()
         if (abs(particle1.phi) > 10 || abs(particle2.phi) > 10)
         {
             std::cout << "Error: phi has become unusually large.\n";
+            break;
+        }
+
+        separation = sqrt(particle1.r * particle1.r + particle2.r * particle2.r
+            - 2. * particle1.r * particle2.r
+            * (sin(particle1.theta) * sin(particle2.theta) 
+                * cos(particle1.phi - particle2.phi)
+                + cos(particle1.theta) * cos(particle2.theta)));
+
+        if (separation > 3. * moleculeLength)
+        {
+            std::cout << "Possible dissocitation.\n";
             break;
         }
 

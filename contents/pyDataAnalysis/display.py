@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import linalg
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -15,7 +16,8 @@ epsilon_0 = 1. / (4.*np.pi) # Geometrised-Gaussian units
 
 
 
-def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True):
+def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray,
+                  isPrecise:bool=True, renderFull:bool=True):
     """
     Display the particle(')s(') motion through the system.
     
@@ -84,7 +86,9 @@ def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=Tru
                       for c2, c4 in zip(coords2[:,2], coords2[:,4])], dtype=object)
         
     ax.scatter(x1,y1,z1, c='b', marker='.',s=1.)
-    ax.scatter(x2,y2,z2, c='g', marker='.',s=1.)
+    
+    if renderFull:
+        ax.scatter(x2,y2,z2, c='g', marker='.',s=1.)
     
     
     # Create appropiate labels.
@@ -98,6 +102,7 @@ def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=Tru
     ax.set_ylim(-size, size)
     ax.set_zlim(-size, size)
     
+    #plt.show()
     plt.savefig(pathtohere / 'plots/system3D.png', bbox_inches='tight')
     plt.close(fig)
     
@@ -134,21 +139,29 @@ def displayMolecule(coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True)
         y2 = np.array([c2 * sin(c4) * sin(c3) 
                       for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
    
+    COM = np.asarray([x1+x2, y1+y2]) / 2.
 
     xoffset = min(min(x1),min(x2))
 
-    ax.scatter(x1 - xoffset,y1, c='b', marker='.',s=1., zorder=2)
-    ax.scatter(x2 - xoffset,y2, c='g', marker='.',s=1., zorder=2)
+    ax.scatter(x1 - COM[0],y1 - COM[1], c='b', marker='.',s=1., zorder=3)
+    ax.scatter(x2 - COM[0],y2 - COM[1], c='g', marker='.',s=1., zorder=3)
+    
+    # Draw bond.
     for i in tqdm(range(len(x1))):
         if i%(len(x1)//1000) == 0 and i>0.67*len(x1) and i < 0.69*len(x1):
-            ax.plot((x1[i]-xoffset,x2[i]-xoffset),(y1[i],y2[i]), c='k', alpha=0.9*((i/len(x1)-0.67)/(0.69-0.67)), zorder=1)
+            ax.plot((x1[i] - COM[0,i], x2[i] - COM[0,i]),(y1[i] - COM[1,i],y2[i] - COM[1,i]),
+                    c='k', alpha=0.9*((i/len(x1)-0.67)/(0.69-0.67)), zorder=2)
+        elif i==0:
+            ax.plot((x1[i] - COM[0,i], x2[i] - COM[0,i]),(y1[i] - COM[1,i], y2[i] - COM[1,i]), c='r', alpha=0.9, zorder=4)
+
     
     
     # Create appropiate labels.
     ax.set_xlabel('x')
     ax.set_ylabel('y')
-    ax.set_title(f'x+{xoffset}')
+    ax.set_title(f'x+{xoffset}', pad=1.)
     
+    #plt.show()
     plt.savefig(pathtohere / 'plots/molecule.png', bbox_inches='tight')
     plt.close(fig)
     
@@ -203,6 +216,7 @@ def displayCoordinateStats(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise
         ax.set_xlabel(r'$\lambda$')
         ax.set_ylabel(ylabels[i])
         
+    #plt.show()
     plt.savefig(pathtohere / 'plots/coordStats.png', bbox_inches='tight')
     plt.close(fig)
     
@@ -298,6 +312,7 @@ def displayMoleculeAngle(coords1:np.ndarray, coords2:np.ndarray,
     ax.set_xlabel(r'$\lambda$')
     ax.set_ylabel(r'molecule length')
     
+    #plt.show()
     plt.savefig(pathtohere / 'plots/moleculeStats.png', bbox_inches='tight')
     plt.close(fig)
         

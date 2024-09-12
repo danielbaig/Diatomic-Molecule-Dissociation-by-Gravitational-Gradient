@@ -76,6 +76,18 @@ def readPropertiesFile():
                 line = f.readline()
                 i += 1
                 startTheta1 = float(line)
+            elif (line[:-1] == "# particle r_dot0 [double] [ms^-1 / c]"):
+                line = f.readline()
+                i += 1
+                r_dot0 = float(line)
+            elif (line[:-1] == "# particle phi_dot0 [double] [rad s^-1]"):
+                line = f.readline()
+                i += 1
+                phi_dot0 = float(line)
+            elif (line[:-1] == "# particle theta_dot0 [double] [rad s^-1]"):
+                line = f.readline()
+                i += 1
+                theta_dot0 = float(line)
             elif (line[:-1] == "# particle dphi [double] [rad]"):
                 line = f.readline()
                 i += 1
