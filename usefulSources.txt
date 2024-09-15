@@ -1,0 +1,32 @@
+Exact GR solutions:
+https://en.wikipedia.org/wiki/Exact_solutions_in_general_relativity
+
+General BH:
+Cebeci H, Özdemir N, Şentorun S. Motion of the charged test particles in Kerr-Newman-Taub-NUT spacetime and analytical solutions. Physical Review D. 2016 May 15;93(10):104031.
+
+Moving charges:
+https://en.wikipedia.org/wiki/Li%C3%A9nard%E2%80%93Wiechert_potential
+
+Adding a charge term to the Lagrangian:
+https://en.wikipedia.org/wiki/Relativistic_Lagrangian_mechanics#General_relativistic_test_particle_in_an_electromagnetic_field
+
+Geometrised-Gaussian units (c=G=4\pi\epsilon_0=1):
+Myers AL. Natural system of units in general relativity. 2016. https://www.seas.upenn.edu/~amyers/NaturalUnits.pdf
+
+Lennard-Jones parameters:
+Cao J, Wang Y, Shi J, Chai J, Cai K. Initial relative position influencing self-assembly of a black phosphorus ribbon on a cnt. International Journal of Molecular Sciences. 2018 Dec 17;19(12):4085.
+
+Sagittarius A* mass:
+Abuter R, Aimar N, Seoane PA, Amorim A, Bauböck M, Berger JP, Bonnet H, Bourdarot G, Brandner W, Cardoso V, Clénet Y. Polarimetry and astrometry of NIR flares as event horizon scale, dynamical probes for the mass of Sgr A. Astronomy & Astrophysics. 2023 Sep 1;677:L10.
+
+Atomic unit:
+https://physics.nist.gov/cgi-bin/cuu/Value?Rukg
+
+Electric charge:
+https://physics.nist.gov/cgi-bin/cuu/Value?e
+
+BH charge estimates:
+https://arxiv.org/pdf/2206.02488
+
+BH Kerr parameter:
+https://arxiv.org/pdf/1306.2033

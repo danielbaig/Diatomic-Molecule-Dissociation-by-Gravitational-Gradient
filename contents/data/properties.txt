@@ -25,13 +25,13 @@
 # particle dphi [double] [rad]
 0.
 # particle dr/moleculeLength [double]
-1.1
+1.0001
 
 # Black hole mass [double] [sol]
 4.297e+6
 # Black hole Kerr parameter (a) [double]
-1e-100
+0.65
 # Black hole gravitomagnetic monopole moment (l) [double] [A m]
 0.
 # Black hole electric charge (Q) [double] [e]
-0.
+8.5e+5

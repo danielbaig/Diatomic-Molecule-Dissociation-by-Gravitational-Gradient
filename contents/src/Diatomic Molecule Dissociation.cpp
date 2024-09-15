@@ -10,7 +10,6 @@
 #define _USE_MATH_DEFINES
 #include "math.h"
 
-//#include "Eigen/Dense"
 #include <boost/multiprecision/cpp_dec_float.hpp>
 using namespace boost::multiprecision;
 constexpr unsigned int precision{ 40 };
@@ -19,259 +18,37 @@ using cpp_dec_float_n = number<cpp_dec_float<precision>>;
 
 #include "blackHole.h"
 #include "particle.h"
-#include "eulerLagrange.h"
+#include "finiteDifferences.h"
 
 
 
 
-/*
-Cebeci H, Ozdemir N, Sentorun S. Motion of the charged test particles in
-Kerr-Newman-Taub-NUT spacetime and analytical solutions.
-Physical Review D. 2016 May 15;93(10):104031.
+
+/* 
+Myers AL.Natural system of units in general relativity. 2016.
+https://www.seas.upenn.edu/~amyers/NaturalUnits.pdf
 */
+const cpp_dec_float_n epsilon_0{ 1. / (4. * M_PI) }; // Geometrised-Gaussian units.
 
 
-const cpp_dec_float_n epsilon_0{ 1. / (4.*M_PI)}; // Geometrised-Gaussian units.
 
-
-cpp_dec_float_n sigma(const BlackHole* BH, Particle* p)
-{
-    const cpp_dec_float_n x{ BH->l + BH->a * cos(p->theta) };
-    return p->r2 +x * x;
-}
-
-cpp_dec_float_n delta(const BlackHole* BH, Particle* p)
-{
-    return p->r2 - 2. * BH->mass * p->r +BH->a2 - BH->l2 + BH->charge2;
-}
-
-cpp_dec_float_n chi(const BlackHole* BH, Particle* p)
-{
-    const cpp_dec_float_n sintheta{ sin(p->theta) };
-    return BH->a* sintheta* sintheta - 2. * BH->l * cos(p->theta);
-}
-
-
-void updateCoordinates(Particle* p, const cpp_dec_float_n next_t, const cpp_dec_float_n next_r,
-    const cpp_dec_float_n next_phi, const cpp_dec_float_n next_theta)
+std::tuple<cpp_dec_float_n, cpp_dec_float_n, cpp_dec_float_n,
+    cpp_dec_float_n, cpp_dec_float_n, cpp_dec_float_n,
+    cpp_dec_float_n, cpp_dec_float_n, cpp_dec_float_n,
+    cpp_dec_float_n, cpp_dec_float_n, cpp_dec_float_n,
+    cpp_dec_float_n, cpp_dec_float_n, cpp_dec_float_n,
+    cpp_dec_float_n, cpp_dec_float_n> readPropertiesFile()
 {
     /*
-    Update the coordinates to the new values.
+    Reads the properties file to determine the parameters of the system.
+    (I am aware of the number of variables being returned, this has been
+    done to ease readability below so other parameters can be easily
+    added in the future.)
 
-    Inputs:
-        - Particle* p: Instance of the particle which coordinates have changed.
-        - const cpp_dec_float_n next_t: Next time.
-        - const cpp_dec_float_n next_r: Next radius.
-        - const cpp_dec_float_n next_phi: Next phi.
-        - const cpp_dec_float_n next_theta: Next theta.
-
+    Outputs:
+        ~ cpp_dec_float_n: 'All the system's parameters.'
     */
 
-    // Perform update.
-    p->t_prevprev = p->t_prev;
-    p->t_prev = p->t;
-    p->t = next_t;
-
-    p->r_prevprev = p->r_prev;
-    p->r_prev = p->r;
-    p->r = next_r;
-    p->r2 = p->r * p->r;
-    p->r2 = p->r * p->r;
-    p->r3 = p->r * p->r2;
-    p->r4 = p->r2 * p->r2;
-    p->r5 = p->r2 * p->r3;
-    p->r6 = p->r3 * p->r3;
-    p->r7 = p->r3 * p->r4;
-
-    p->phi_prevprev = p->phi_prev;
-    p->phi_prev = p->phi;
-    p->phi = next_phi;
-
-    p->theta_prevprev = p->theta_prev;
-    p->theta_prev = p->theta;
-    p->theta = next_theta;
-}
-
-
-void eulerMove(const BlackHole* BH, Particle* p1, Particle* p2, const cpp_dec_float_n dlambda)
-{
-    /*
-    Move forwards one step by the Euler method using the forward difference.
-
-    Inputs:
-       - const BlackHole* BH: Instance of the black hole.
-       - Particle* p1: Instance of the first particle.
-       - Particle* p2: Instance of the second particle.
-       - const double dlambda: Simulation affine parameter step.
-    */
-
-
-    static const cpp_dec_float_n r_Q2{ BH->charge * BH->charge / (4. * M_PI * epsilon_0) };
-    static const cpp_dec_float_n r_s{ 2. * BH->mass };
-    
-
-    const cpp_dec_float_n sigma_p1{ sigma(BH, p1) };
-    const cpp_dec_float_n chi_p1{ chi(BH, p1) };
-    const cpp_dec_float_n delta_p1{ delta(BH, p1) };
-
-
-    cpp_dec_float_n next_t1{};
-    cpp_dec_float_n next_phi1{};
-    cpp_dec_float_n next_r1{};
-    cpp_dec_float_n next_theta1{};
-
-    const cpp_dec_float_n sigma_p2{ sigma(BH, p2) };
-    const cpp_dec_float_n chi_p2{ chi(BH, p2) };
-    const cpp_dec_float_n delta_p2{ delta(BH, p2) };
-
-
-    cpp_dec_float_n next_t2{};
-    cpp_dec_float_n next_phi2{};
-    cpp_dec_float_n next_r2{};
-    cpp_dec_float_n next_theta2{};
-
-
-    if (p1->r > r_s / 2. + sqrt(r_s * r_s / 4. - BH->a2 - r_Q2))
-    {
-        std::tie(next_t1, next_r1, next_phi1, next_theta1) = eulerMoveMathematica(BH,
-            p1, p2,
-            sigma_p1, delta_p1, chi_p1, dlambda);
-    }
-    if (p2->r > r_s / 2. + sqrt(r_s * r_s / 4. - BH->a2 - r_Q2))
-    {
-        std::tie(next_t2, next_r2, next_phi2, next_theta2) = eulerMoveMathematica(BH,
-            p2, p1,
-            sigma_p2, delta_p2, chi_p2, dlambda);
-    }
-    if (p1->r > r_s / 2. + sqrt(r_s * r_s / 4. - BH->a2 - r_Q2))
-    {
-        updateCoordinates(p1, next_t1, next_r1, next_phi1, next_theta1);
-    }
-    if (p2->r > r_s / 2. + sqrt(r_s * r_s / 4. - BH->a2 - r_Q2))
-    {
-        updateCoordinates(p2, next_t2, next_r2, next_phi2, next_theta2);
-    }
-}
-
-
-void setupInitialStep(Particle* p, const cpp_dec_float_n next_t, const cpp_dec_float_n next_r,
-    const cpp_dec_float_n next_phi, const cpp_dec_float_n next_theta, const cpp_dec_float_n dlambda,
-    const cpp_dec_float_n r_dot0, const cpp_dec_float_n r_sintheta_phi_dot0,
-    const cpp_dec_float_n r_theta_dot0)
-{
-    /*
-    Perform the first step incorporating the initial velocity conditions.
-
-    Inputs:
-        - Particle* p: Particle to move.
-        - const cpp_dec_float_n next_t: Next time.
-        - const cpp_dec_float_n next_r: Next radius.
-        - const cpp_dec_float_n next_phi: Next phi.
-        - const cpp_dec_float_n next_theta: Next theta.
-        - const cpp_dec_float_n dlambda: Lambda step.
-        - const cpp_dec_float_n r_dot0: Initial radial velocity.
-        - const cpp_dec_float_n r_sintheta_phi_dot0: Initial azimuthal velocity.
-        - const cpp_dec_float_n r_theta_dot0: Initial polar velocity.
-    */
-
-    p->t_prev = p->t_prevprev + dlambda * 1. + next_t
-        - (2. * p->t_prev - p->t_prevprev);
-    p->phi_prev = p->phi_prevprev 
-        + dlambda * r_sintheta_phi_dot0 / (p->r_prev*sin(p->theta_prev)) + next_phi
-        - (2. * p->phi_prev - p->phi_prevprev);
-
-    p->r_prev = p->r_prevprev + dlambda * r_dot0 + next_r
-        - (2. * p->r_prev - p->r_prevprev);
-    p->theta_prev = p->theta_prevprev + dlambda * r_theta_dot0 / p->r_prev
-        + next_theta - (2. * p->theta_prev - p->theta_prevprev);
-
-
-
-    p->t = p->t_prev + dlambda * 1. + next_t
-        - (2. * p->t - p->t_prev);
-    p->phi = p->phi_prev + dlambda * r_sintheta_phi_dot0 / (p->r * sin(p->theta)) + next_phi
-        - (2. * p->phi - p->phi_prev);
-
-    p->r = p->r_prev + dlambda * r_dot0 + next_r - (2. * p->r - p->r_prev);
-    p->theta = p->theta_prev + dlambda * r_theta_dot0 / p->r
-        + next_theta - (2. * p->theta - p->theta_prev);
-
-
-    p->r2 = p->r * p->r;
-    p->r3 = p->r * p->r2;
-    p->r4 = p->r2 * p->r2;
-    p->r5 = p->r2 * p->r3;
-    p->r6 = p->r3 * p->r3;
-    p->r7 = p->r3 * p->r4;
-}
-
-
-
-
-void applyInitialConditions(const BlackHole* BH, Particle* p1, Particle* p2, cpp_dec_float_n dlambda,
-    cpp_dec_float_n r_dot0, cpp_dec_float_n r_sintheta_phi_dot0, cpp_dec_float_n r_theta_dot0)
-{
-    /*
-    Perform the update for the initial step.
-
-    Inputs:
-       - const BlackHole* BH: Instance of the black hole.
-       - Particle* p1: Instance of the first particle.
-       - Particle* p2: Instance of the second particle.
-       - const double dlambda: Simulation affine parameter step.
-       - const cpp_dec_float_n r_dot0: Initial radial velocity.
-       - const cpp_dec_float_n r_sintheta_phi_dot0: Initial azimuthal velocity.
-       - const cpp_dec_float_n r_theta_dot0: Initial polar velocity.
-    */
-
-    // For sigma, chi and delta.
-    p1->r2 = p1->r * p1->r;
-    p2->r2 = p2->r * p2->r;
-
-    // First step must be done manually to account for initial conditions.
-    const cpp_dec_float_n sigma_p1{ sigma(BH, p1) };
-    const cpp_dec_float_n chi_p1{ chi(BH, p1) };
-    const cpp_dec_float_n delta_p1{ delta(BH, p1) };
-
-    const cpp_dec_float_n sigma_p2{ sigma(BH, p2) };
-    const cpp_dec_float_n chi_p2{ chi(BH, p2) };
-    const cpp_dec_float_n delta_p2{ delta(BH, p2) };
-
-
-
-    cpp_dec_float_n next_t1{p1->t};
-    cpp_dec_float_n next_phi1{p1->phi};
-    cpp_dec_float_n next_r1{p1->r};
-    cpp_dec_float_n next_theta1{p1->theta};
-
-    cpp_dec_float_n next_t2{p2->t};
-    cpp_dec_float_n next_phi2{p2->phi};
-    cpp_dec_float_n next_r2{p2->r};
-    cpp_dec_float_n next_theta2{p2->theta};
-
-    /*
-    std::tie(next_t1, next_r1, next_phi1, next_theta1) = eulerMoveMathematica(BH,
-        p1, p2,
-        sigma_p1, delta_p1, chi_p1, dlambda);
-
-    std::tie(next_t2, next_r2, next_phi2, next_theta2) = eulerMoveMathematica(BH,
-        p2, p1,
-        sigma_p2, delta_p2, chi_p2, dlambda);
-    */
-
-    setupInitialStep(p1, next_t1, next_r1, next_phi1, next_theta1,
-        dlambda, r_dot0, r_sintheta_phi_dot0, r_theta_dot0);
-
-    setupInitialStep(p2, next_t2, next_r2, next_phi2, next_theta2,
-        dlambda, r_dot0, r_sintheta_phi_dot0, r_theta_dot0);
-    
-}
-
-
-
-
-int main()
-{
     // Properties file parameters.
     cpp_dec_float_n mass{};
     cpp_dec_float_n epsilon{};
@@ -294,14 +71,20 @@ int main()
     cpp_dec_float_n BH_charge{};
 
     // Conversions.
+    /*
+    Myers AL.Natural system of units in general relativity. 2016.
+    https://www.seas.upenn.edu/~amyers/NaturalUnits.pdf
+    */
     const cpp_dec_float_n kg_to_m{ 1. / cpp_dec_float_n(1.3466e+27) };
-    const cpp_dec_float_n eV_to_m{ cpp_dec_float_n(1.602176634e-19) 
+    // https://physics.nist.gov/cgi-bin/cuu/Value?e
+    const cpp_dec_float_n eV_to_m{ cpp_dec_float_n(1.602176634e-19)
         / cpp_dec_float_n(1.2102e+44) };
     const cpp_dec_float_n e_to_1{ cpp_dec_float_n(1.602176634e-19)
-        / cpp_dec_float_n(5.2909e-19) };
+        / cpp_dec_float_n(3.2735042501e+16) };
     const cpp_dec_float_n s_to_m{ 1. / cpp_dec_float_n(3.3356e-9) };
     const cpp_dec_float_n sol_to_m{ cpp_dec_float_n(1.98855e+30) * kg_to_m };
 
+    // Open file.
     std::ifstream propertiesFile{};
     propertiesFile.open("../data/properties.txt");
     if (!propertiesFile.is_open())
@@ -324,6 +107,7 @@ int main()
         {
             propertiesFile >> line;
             ++lineCount;
+            // https://physics.nist.gov/cgi-bin/cuu/Value?Rukg
             mass = kg_to_m * cpp_dec_float_n(1.66053906892e-27) * cpp_dec_float_n(line);
         }
         else if (line == "# particle epsilon [double] [meV]")
@@ -437,16 +221,60 @@ int main()
 
 
     }
-    cpp_dec_float_n moleculeLength{ cpp_dec_float_n(1.12246204831) * sigma0}; // 2^1/6 * sigma
+
+    return { mass, epsilon, sigma0, electricCharge, startTime1,
+        startRadius1, startPhi1, startTheta1, r_dot0,
+        r_sintheta_phi_dot0, r_theta_dot0, dphi, drCoeff,
+        BH_mass, BH_a, BH_l, BH_charge };
+}
+
+
+
+
+
+
+int main()
+{
+    // Properties file parameters.
+    cpp_dec_float_n mass{};
+    cpp_dec_float_n epsilon{};
+    cpp_dec_float_n sigma0{};
+    cpp_dec_float_n electricCharge{};
+    cpp_dec_float_n startTime1{};
+    cpp_dec_float_n startRadius1{};
+    cpp_dec_float_n startPhi1{};
+    cpp_dec_float_n startTheta1{};
+
+    cpp_dec_float_n r_dot0{};
+    cpp_dec_float_n r_sintheta_phi_dot0{};
+    cpp_dec_float_n r_theta_dot0{};
+    cpp_dec_float_n dphi{};
+    cpp_dec_float_n drCoeff{};
+
+    cpp_dec_float_n BH_mass{};
+    cpp_dec_float_n BH_a{};
+    cpp_dec_float_n BH_l{};
+    cpp_dec_float_n BH_charge{};
+
+    std::tie(mass, epsilon, sigma0, electricCharge, startTime1,
+        startRadius1, startPhi1, startTheta1, r_dot0,
+        r_sintheta_phi_dot0, r_theta_dot0, dphi, drCoeff,
+        BH_mass, BH_a, BH_l, BH_charge) = readPropertiesFile();
+    
+
+    cpp_dec_float_n moleculeLength{ 
+        cpp_dec_float_n(1.12246204831) * sigma0}; // 2^1/6 * sigma
     std::cout << "Molecule length: " << moleculeLength << " m\n";
 
 
+    // System physicallity warnings.
     if (BH_a * BH_a + BH_charge * BH_charge > BH_mass * BH_mass)
     {
         std::cout << "Warning: No horizon present.\n";
     }
 
-    const cpp_dec_float_n speed0{ sqrt(r_dot0 * r_dot0 + r_theta_dot0 * r_theta_dot0
+    const cpp_dec_float_n speed0{ sqrt(
+        r_dot0 * r_dot0 + r_theta_dot0 * r_theta_dot0
         + r_sintheta_phi_dot0 * r_sintheta_phi_dot0) };
 
 
@@ -464,18 +292,16 @@ int main()
 
 
     const BlackHole BH{ BH_mass, BH_a, BH_l, BH_charge };
-    Particle particle1{ mass, epsilon*0, sigma0, electricCharge, startTime1,
+    Particle particle1{ mass, epsilon*1e-23, sigma0, -electricCharge, startTime1,
         startRadius1, startPhi1, startTheta1 };
 
-    Particle particle2{ mass, epsilon*0, sigma0, electricCharge, startTime1,
+    Particle particle2{ mass, epsilon*1e-23, sigma0, +electricCharge, startTime1,
         startRadius1 + drCoeff*moleculeLength, startPhi1 + dphi, startTheta1 };
 
 
-    const cpp_dec_float_n dlambda{ 1e-3 }; // Minkowski: 1e-6 bg: 1e-3 free: 1e+7
+    const cpp_dec_float_n dlambda{ 1e-3 }; // Minkowski: 1e-6 BH: 1e-3
     applyInitialConditions(&BH, &particle1, &particle2, dlambda,
         r_dot0, r_sintheta_phi_dot0, r_theta_dot0);
-
-
 
 
 
@@ -490,12 +316,6 @@ int main()
     }
 
     // File setup.
-    /*
-    FILE* coords1_TXT = NULL;
-    coords1_TXT = fopen("../data/coords1.txt", "w");
-    FILE* coords2_TXT = NULL;
-    coords2_TXT = fopen("../data/coords2.txt", "w");
-    */
     std::ofstream coords1_TXT("../data/coords1.txt");
     std::ofstream coords2_TXT("../data/coords2.txt");
 
@@ -504,7 +324,8 @@ int main()
     coords2_TXT << std::setprecision(precision) << std::fixed;
 
     // Loop variables.
-    constexpr unsigned int maxStep{ static_cast<unsigned int>(1e+4) }; // Debug 1e+3
+    constexpr unsigned int maxStep{
+        static_cast<unsigned int>(1e+4) }; // Debug 1e+3
     const unsigned int period{ maxStep / 10 };
     unsigned int step{ 0 };
     cpp_dec_float_n lambda{ 0. };
@@ -513,26 +334,14 @@ int main()
 
     while (step < maxStep)
     {
-
-
         if ((step+1)%period==0)
         {
-            std::cout << 100* static_cast<double>(step+1) / static_cast<double>(maxStep) << "%\n";
-        }
-        // Enter coordinate data into file.
-        /*
-        fprintf(coords1_TXT, "%.25lf,%.25lf,%.25lf,%.25lf,%.25lf\n", lambda, particle1.t,
-            particle1.r, particle1.phi, particle1.theta);
-        fprintf(coords2_TXT, "%.25lf,%.25lf,%.25lf,%.25lf,%.25lf\n", lambda, particle2.t,
-            particle2.r, particle2.phi, particle2.theta);
-        */
-
-        if (abs(particle1.phi) > 10 || abs(particle2.phi) > 10)
-        {
-            std::cout << "Error: phi has become unusually large.\n";
-            break;
+            std::cout << 100* static_cast<double>(step+1) 
+                / static_cast<double>(maxStep) << "%\n";
         }
 
+        // Test dissociation.
+        // https://math.stackexchange.com/questions/833002/distance-between-two-points-in-spherical-coordinates
         separation = sqrt(particle1.r * particle1.r + particle2.r * particle2.r
             - 2. * particle1.r * particle2.r
             * (sin(particle1.theta) * sin(particle2.theta) 
@@ -547,7 +356,7 @@ int main()
 
 
 
-
+        // Enter coordinate data into file.
         coords1_TXT << lambda << ',' << particle1.t << ',' << particle1.r << ','
             << particle1.phi << ',' << particle1.theta << '\n';
         coords2_TXT << lambda << ',' << particle2.t << ',' << particle2.r << ','
@@ -555,32 +364,12 @@ int main()
 
         eulerMove(&BH, &particle1, &particle2, dlambda);
 
-        /*
-
-        if (particle1.r < r_s / 2. + sqrt(r_s * r_s / 4. - BH.a2 - r_Q2))
-        {
-            std::cout << "Entered outer horizon.\n";
-            printf("%lf,%lf,%lf,%lf,%lf\n", lambda, particle1.t,
-                particle1.r, particle1.phi, particle1.theta);
-            std::cout << r_s / 2. + sqrt(r_s * r_s / 4. - BH.a2 - r_Q2) << '\n';
-            break;
-        }
-        else if (particle1.r > 1.1*startRadius1)
-        {
-            std::cout << "Particle has escaped.\n";
-            printf("%lf,%lf,%lf,%lf,%lf\n", lambda, particle1.t,
-                particle1.r, particle1.phi, particle1.theta);
-            break;
-        }
-        */
 
 
         ++step;
         lambda += dlambda;
     }
     
-    // fflush(coords1_TXT);
-    // fflush(coords2_TXT);
 
     coords1_TXT.close();
     coords2_TXT.close();

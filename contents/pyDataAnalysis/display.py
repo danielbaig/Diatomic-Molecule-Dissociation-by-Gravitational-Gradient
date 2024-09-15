@@ -364,7 +364,8 @@ def displayMoleculeStats(coords1:np.ndarray, coords2:np.ndarray,
         ax.scatter(coords1[:,0], norm_delta - separationOffset, c='lime', marker='.')
     ax.grid()
     
-    if any(norm_delta < moleculeLength):
+    # Only include equilibrium line if it is passed.
+    if any(norm_delta < moleculeLength) and any(norm_delta>moleculeLength):
         ax.axhline(moleculeLength, c='r')
     
     ax.set_xlabel(r'$\lambda$')

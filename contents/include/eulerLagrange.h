@@ -15,9 +15,9 @@ using cpp_dec_float_n = number<cpp_dec_float<40>>;
 
 
 struct Precalculated{
-	cpp_dec_float_n* temp0{ new cpp_dec_float_n[52]{} };
-	cpp_dec_float_n* temp1{ new cpp_dec_float_n[28]{} };
-	cpp_dec_float_n* temp2{ new cpp_dec_float_n[652]{} };
+	cpp_dec_float_n* temp0{ new cpp_dec_float_n[48]{} };
+	cpp_dec_float_n* temp1{ new cpp_dec_float_n[27]{} };
+	cpp_dec_float_n* temp2{ new cpp_dec_float_n[431]{} };
 
 
 	const cpp_dec_float_n sigma_p2{};

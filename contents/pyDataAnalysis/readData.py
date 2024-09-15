@@ -33,7 +33,7 @@ def readPropertiesFile():
     
     kg_to_m = 1. / mpmathify(1.3466e+27)
     eV_to_m = mpmathify(1.602176634e-19) / mpmathify(1.2102e+44)
-    e_to_1 = mpmathify(1.602176634e-19) / mpmathify(5.2909e-19)
+    e_to_1 = mpmathify(1.602176634e-19) / mpmathify(3.2735042501e+16)
     s_to_m = 1. / mpmathify(3.3356e-9)
     sol_to_m = mpmathify(1.98855e+30) * kg_to_m
     

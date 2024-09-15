@@ -143,11 +143,13 @@
     <ClCompile Include="blackHole.cpp" />
     <ClCompile Include="Diatomic Molecule Dissociation.cpp" />
     <ClCompile Include="eulerLagrange.cpp" />
+    <ClCompile Include="finiteDifferences.cpp" />
     <ClCompile Include="particle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\blackHole.h" />
     <ClInclude Include="..\include\eulerLagrange.h" />
+    <ClInclude Include="..\include\finiteDifferences.h" />
     <ClInclude Include="..\include\particle.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
