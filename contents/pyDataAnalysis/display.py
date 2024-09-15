@@ -159,7 +159,7 @@ def displayMolecule(coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True)
     # Create appropiate labels.
     ax.set_xlabel('x')
     ax.set_ylabel('y')
-    ax.set_title(f'x+{xoffset}', pad=1.)
+    ax.set_title('CoM frame')
     
     #plt.show()
     plt.savefig(pathtohere / 'plots/molecule.png', bbox_inches='tight')
@@ -221,7 +221,57 @@ def displayCoordinateStats(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise
     plt.close(fig)
     
     
-def displayMoleculeAngle(coords1:np.ndarray, coords2:np.ndarray,
+def displayPhaseSpace_phi_r(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True):
+    """
+    Display how the particles move in the phi-r phase space.
+   
+    Inputs:
+        - BH: Instance of the black hole.
+        - coords1:np.ndarray: History of the coordinates of particle 1.
+        - coords2:np.ndarray: History of the coordinates of particle 2.
+        - isPrecise:bool: Whether to use the ultra precise measurements.
+    """
+    
+    r_Q2 = BH.charge*BH.charge / (4*np.pi*epsilon_0)
+    r_s = 2.*BH.mass    
+
+    
+    # Create figure.
+    fig = plt.figure(figsize=(8,8))
+    
+    ax = fig.add_subplot()
+    offset = min(min(coords1[:,2]),min(coords2[:,2]))
+
+    ax.scatter(coords1[:,3], coords1[:,2] - offset, marker='.',c='b')
+    ax.scatter(coords2[:,3], coords2[:,2] - offset, marker='.',c='g')
+    
+    if not isPrecise:
+        r_erg = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a*np.cos(coords1[:,4])*np.cos(coords1[:,4]) - r_Q2)
+    else:
+        r_erg = r_s / 2. + np.array([sqrt(r_s*r_s / 4. - BH.a*BH.a*cos(c3)*cos(c3) - r_Q2)
+              for c3 in coords1[:,4]], dtype=object)
+
+    r_eventHorizon = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a - r_Q2)
+
+    if offset <= max(r_erg):
+        ax.plot(coords1[:,3],r_erg-offset,c='y')
+        ax.axhline(r_eventHorizon-offset,c='m')
+    else:
+        ax.set_ylim(0, float(max(max(coords1[:,2]),max(coords2[:,2])) - offset))
+        ax.set_title(f'+{offset}')
+        
+    ax.grid()
+
+    # Create appropiate labels.
+    ax.set_xlabel(r'$\phi$')
+    ax.set_ylabel('r')
+        
+    #plt.show()
+    plt.savefig(pathtohere / 'plots/phaseSpace_phi_r.png', bbox_inches='tight')
+    plt.close(fig)
+    
+    
+def displayMoleculeStats(coords1:np.ndarray, coords2:np.ndarray,
                          moleculeLength:float, isPrecise:bool=True):
     """
     Display how the moleculear angle and length vary.
@@ -264,6 +314,7 @@ def displayMoleculeAngle(coords1:np.ndarray, coords2:np.ndarray,
     COM = np.asarray([x1+x2, y1+y2, z1+z2]) / 2.
     delta = np.asarray([x2-x1, y2-y1, z2-z1])
     
+    
     if not isPrecise:
         angle = np.arccos((COM[0]*delta[0] + COM[1]*delta[1] + COM[2]*delta[2]) 
                           / linalg.norm(COM, axis=0) / linalg.norm(delta, axis=0))
@@ -271,11 +322,12 @@ def displayMoleculeAngle(coords1:np.ndarray, coords2:np.ndarray,
     else:
         # Compute the dot product of COM and delta
         dot_product = sum(c * d for c, d in zip(COM, delta))
-
+        
+        
         # Compute the norms of COM and delta
         norm_COM = np.array([sqrt(s) for s in sum(c*c for c in COM)], dtype=object)
         norm_delta = np.array([sqrt(s) for s in sum(d*d for d in delta)], dtype=object)
-
+        
         
         # Compute the cosine argument
         cos_argument = dot_product / (norm_COM * norm_delta)
@@ -288,6 +340,9 @@ def displayMoleculeAngle(coords1:np.ndarray, coords2:np.ndarray,
         # Calculate the angle in radians
         angle = np.array([acos(a) for a in cos_argument], dtype=object)
     
+    
+    
+    # Generate figure.
     fig = plt.figure(figsize=(8,10), tight_layout=True)
     
     
@@ -305,12 +360,15 @@ def displayMoleculeAngle(coords1:np.ndarray, coords2:np.ndarray,
     if not isPrecise:
         ax.scatter(coords1[:,0], linalg.norm(delta,axis=0), c='lime', marker='.')
     else:
-        ax.scatter(coords1[:,0], norm_delta, c='lime', marker='.')
+        separationOffset = min(norm_delta)
+        ax.scatter(coords1[:,0], norm_delta - separationOffset, c='lime', marker='.')
     ax.grid()
-    ax.axhline(moleculeLength, c='r')
+    
+    if any(norm_delta < moleculeLength):
+        ax.axhline(moleculeLength, c='r')
     
     ax.set_xlabel(r'$\lambda$')
-    ax.set_ylabel(r'molecule length')
+    ax.set_ylabel(f'molecule length\n+{separationOffset}')
     
     #plt.show()
     plt.savefig(pathtohere / 'plots/moleculeStats.png', bbox_inches='tight')

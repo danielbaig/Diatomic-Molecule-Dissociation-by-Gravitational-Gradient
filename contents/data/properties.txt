@@ -9,7 +9,7 @@
 # particle start time [double] [s]
 0.
 # particle start radius [double] [Gm]
-13.0
+13.
 # particle start phi [double] [rad]
 0.
 # particle start theta [double] [rad]
@@ -17,20 +17,20 @@
 
 # particle r_dot0 [double] [ms^-1 / c]
 0.
-# particle phi_dot0 [double] [rad s^-1]
-8.386e-12
-# particle theta_dot0 [double] [rad s^-1]
+# particle r*sintheta*phi_dot0 [double] [ms^-1 / c]
+0.698650466364564918928
+# particle r*theta_dot0 [double] [ms^-1 / c]
 0.
 
 # particle dphi [double] [rad]
-1e-21
+0.
 # particle dr/moleculeLength [double]
-1.0
+1.1
 
 # Black hole mass [double] [sol]
 4.297e+6
 # Black hole Kerr parameter (a) [double]
-5e-100
+1e-100
 # Black hole gravitomagnetic monopole moment (l) [double] [A m]
 0.
 # Black hole electric charge (Q) [double] [e]

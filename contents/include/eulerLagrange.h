@@ -8,107 +8,122 @@
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
 using namespace boost::multiprecision;
-using cpp_dec_float_25 = number<cpp_dec_float<25>>;
+using cpp_dec_float_n = number<cpp_dec_float<40>>;
 
 #include "blackHole.h"
 #include "particle.h"
 
 
-cpp_dec_float_25 calc_t_next(const BlackHole* BH,
-	Particle* p, Particle* ps,
-	const cpp_dec_float_25 sigma_p, const cpp_dec_float_25 delta_p,
-	const cpp_dec_float_25 chi_p, const cpp_dec_float_25 dlambda);
-
-cpp_dec_float_25 calc_r_next(const BlackHole* BH,
-	Particle* p, Particle* ps,
-	const cpp_dec_float_25 sigma_p, const cpp_dec_float_25 delta_p,
-	const cpp_dec_float_25 chi_p, const cpp_dec_float_25 dlambda);
-
-cpp_dec_float_25 calc_phi_next(const BlackHole* BH,
-	Particle* p, Particle* ps,
-	const cpp_dec_float_25 sigma_p, const cpp_dec_float_25 delta_p,
-	const cpp_dec_float_25 chi_p, const cpp_dec_float_25 dlambda);
-
-cpp_dec_float_25 calc_theta_next(const BlackHole* BH,
-	Particle* p, Particle* ps,
-	const cpp_dec_float_25 sigma_p, const cpp_dec_float_25 delta_p,
-	const cpp_dec_float_25 chi_p, const cpp_dec_float_25 dlambda);
-
 struct Precalculated{
-	const cpp_dec_float_25 sigma_p2{};
-	const cpp_dec_float_25 sigma_p3{};
-	const cpp_dec_float_25 sigma_p4{};
-	const cpp_dec_float_25 delta_p2{};
-	const cpp_dec_float_25 delta_p3{};
-	const cpp_dec_float_25 delta_p4{};
-	const cpp_dec_float_25 chi_p2{};
-	const cpp_dec_float_25 chi_p3{};
-	const cpp_dec_float_25 chi_p4{};
+	cpp_dec_float_n* temp0{ new cpp_dec_float_n[52]{} };
+	cpp_dec_float_n* temp1{ new cpp_dec_float_n[28]{} };
+	cpp_dec_float_n* temp2{ new cpp_dec_float_n[652]{} };
 
-	const cpp_dec_float_25 tdot{};
-	const cpp_dec_float_25 rdot{};
-	const cpp_dec_float_25 phidot{};
-	const cpp_dec_float_25 thetadot{};
 
-	const cpp_dec_float_25 tsdot{};
-	const cpp_dec_float_25 rsdot{};
-	const cpp_dec_float_25 phisdot{};
-	const cpp_dec_float_25 thetasdot{};
-	const cpp_dec_float_25 tsddot{};
-	const cpp_dec_float_25 rsddot{};
-	const cpp_dec_float_25 phisddot{};
-	const cpp_dec_float_25 thetasddot{};
+	const cpp_dec_float_n sigma_p2{};
+	const cpp_dec_float_n sigma_p3{};
+	const cpp_dec_float_n sigma_p4{};
+	const cpp_dec_float_n delta_p2{};
+	const cpp_dec_float_n delta_p3{};
+	const cpp_dec_float_n delta_p4{};
+	const cpp_dec_float_n chi_p2{};
+	const cpp_dec_float_n chi_p3{};
+	const cpp_dec_float_n chi_p4{};
 
-	const cpp_dec_float_25 nx{};
-	const cpp_dec_float_25 ny{};
-	const cpp_dec_float_25 nz{};
-	const cpp_dec_float_25 nmag{};
-	const cpp_dec_float_25 nmag2{};
-	const cpp_dec_float_25 nmag5{};
-	const cpp_dec_float_25 nmag6{};
-	const cpp_dec_float_25 nmag7{};
-	const cpp_dec_float_25 nmag8{};
-	const cpp_dec_float_25 nmag12{};
-	const cpp_dec_float_25 nmag13{};
-	const cpp_dec_float_25 nmag14{};
+	const cpp_dec_float_n tdot{};
+	const cpp_dec_float_n rdot{};
+	const cpp_dec_float_n phidot{};
+	const cpp_dec_float_n thetadot{};
 
-	const cpp_dec_float_25 ral_sqr{};
-	const cpp_dec_float_25 sintheta{};
-	const cpp_dec_float_25 sintheta2{};
-	const cpp_dec_float_25 sintheta3{};
-	const cpp_dec_float_25 sintheta4{};
-	const cpp_dec_float_25 sintheta5{};
-	const cpp_dec_float_25 sintheta6{};
-	const cpp_dec_float_25 sintheta7{};
+	const cpp_dec_float_n tsdot{};
+	const cpp_dec_float_n rsdot{};
+	const cpp_dec_float_n phisdot{};
+	const cpp_dec_float_n thetasdot{};
+	const cpp_dec_float_n tsddot{};
+	const cpp_dec_float_n rsddot{};
+	const cpp_dec_float_n phisddot{};
+	const cpp_dec_float_n thetasddot{};
 
-	const cpp_dec_float_25 costheta{};
-	const cpp_dec_float_25 sin2theta{};
-	const cpp_dec_float_25 sinphi{};
-	const cpp_dec_float_25 cosphi{};
+	const cpp_dec_float_n nx{};
+	const cpp_dec_float_n ny{};
+	const cpp_dec_float_n nz{};
+	const cpp_dec_float_n nmag{};
+	const cpp_dec_float_n nmag2{};
+	const cpp_dec_float_n nmag5{};
+	const cpp_dec_float_n nmag6{};
+	const cpp_dec_float_n nmag7{};
+	const cpp_dec_float_n nmag8{};
+	const cpp_dec_float_n nmag12{};
+	const cpp_dec_float_n nmag13{};
+	const cpp_dec_float_n nmag14{};
 
-	const cpp_dec_float_25 sinthetas{};
-	const cpp_dec_float_25 costhetas{};
-	const cpp_dec_float_25 sinphis{};
-	const cpp_dec_float_25 cosphis{};
-	const cpp_dec_float_25 sinthetasdot{};
-	const cpp_dec_float_25 costhetasdot{};
-	const cpp_dec_float_25 sinphisdot{};
-	const cpp_dec_float_25 cosphisdot{};
-	const cpp_dec_float_25 sinthetas2{};
-	const cpp_dec_float_25 costhetas2{};
-	const cpp_dec_float_25 sinphis2{};
-	const cpp_dec_float_25 cosphis2{};
-	const cpp_dec_float_25 rsdot2{};
-	const cpp_dec_float_25 phisdot2{};
+	const cpp_dec_float_n ral_sqr{};
+	const cpp_dec_float_n sintheta{};
+	const cpp_dec_float_n sintheta2{};
+	const cpp_dec_float_n sintheta3{};
+	const cpp_dec_float_n sintheta4{};
+	const cpp_dec_float_n sintheta5{};
+	const cpp_dec_float_n sintheta6{};
+	const cpp_dec_float_n sintheta7{};
+
+	const cpp_dec_float_n costheta{};
+	const cpp_dec_float_n sin2theta{};
+	const cpp_dec_float_n sinphi{};
+	const cpp_dec_float_n cosphi{};
+
+	const cpp_dec_float_n sinthetas{};
+	const cpp_dec_float_n costhetas{};
+	const cpp_dec_float_n sinphis{};
+	const cpp_dec_float_n cosphis{};
+	const cpp_dec_float_n sinthetasdot{};
+	const cpp_dec_float_n costhetasdot{};
+	const cpp_dec_float_n sinphisdot{};
+	const cpp_dec_float_n cosphisdot{};
+	const cpp_dec_float_n sinthetas2{};
+	const cpp_dec_float_n costhetas2{};
+	const cpp_dec_float_n sinphis2{};
+	const cpp_dec_float_n cosphis2{};
+	const cpp_dec_float_n rsdot2{};
+	const cpp_dec_float_n phisdot2{};
 
 Precalculated(const BlackHole* BH,
 		Particle* p, Particle* ps,
-		const cpp_dec_float_25 sigma_p, const cpp_dec_float_25 delta_p,
-		const cpp_dec_float_25 chi_p, const cpp_dec_float_25 dlambda);
+		const cpp_dec_float_n sigma_p, const cpp_dec_float_n delta_p,
+		const cpp_dec_float_n chi_p, const cpp_dec_float_n dlambda);
+
+~Precalculated();
 };
 
-std::tuple<cpp_dec_float_25, cpp_dec_float_25,	cpp_dec_float_25, cpp_dec_float_25> eulerMoveMathematica(const BlackHole* BH,
+cpp_dec_float_n calc_t_next(const BlackHole* BH,
 	Particle* p, Particle* ps,
-	const cpp_dec_float_25 sigma_p, const cpp_dec_float_25 delta_p,	const cpp_dec_float_25 chi_p, const cpp_dec_float_25 dlambda);
+	const cpp_dec_float_n sigma_p, const cpp_dec_float_n delta_p,
+	const cpp_dec_float_n chi_p, const Precalculated* precalculated,
+	const cpp_dec_float_n dlambda,
+	cpp_dec_float_n* temp=nullptr);
+
+cpp_dec_float_n calc_r_next(const BlackHole* BH,
+	Particle* p, Particle* ps,
+	const cpp_dec_float_n sigma_p, const cpp_dec_float_n delta_p,
+	const cpp_dec_float_n chi_p, const Precalculated* precalculated,
+	const cpp_dec_float_n dlambda,
+	cpp_dec_float_n* temp=nullptr);
+
+cpp_dec_float_n calc_phi_next(const BlackHole* BH,
+	Particle* p, Particle* ps,
+	const cpp_dec_float_n sigma_p, const cpp_dec_float_n delta_p,
+	const cpp_dec_float_n chi_p, const Precalculated* precalculated,
+	const cpp_dec_float_n dlambda,
+	cpp_dec_float_n* temp=nullptr);
+
+cpp_dec_float_n calc_theta_next(const BlackHole* BH,
+	Particle* p, Particle* ps,
+	const cpp_dec_float_n sigma_p, const cpp_dec_float_n delta_p,
+	const cpp_dec_float_n chi_p, const Precalculated* precalculated,
+	const cpp_dec_float_n dlambda,
+	cpp_dec_float_n* temp=nullptr);
+
+std::tuple<cpp_dec_float_n, cpp_dec_float_n,	cpp_dec_float_n, cpp_dec_float_n> eulerMoveMathematica(const BlackHole* BH,
+	Particle* p, Particle* ps,
+	const cpp_dec_float_n sigma_p, const cpp_dec_float_n delta_p,	const cpp_dec_float_n chi_p, const cpp_dec_float_n dlambda);
 
 #endif EULERLAGRANGE_H

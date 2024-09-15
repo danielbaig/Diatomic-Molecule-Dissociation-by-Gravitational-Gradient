@@ -1,6 +1,9 @@
+from mpmath import mpmathify, mp
+
 from pathlib import Path
 pathtohere = Path.cwd()
 
+mp.dps = 40  # Decimal places of precision
 
 class BlackHole:
     mass = 0.
@@ -28,11 +31,11 @@ def readPropertiesFile():
     BH = BlackHole()
     particle = Particle()
     
-    kg_to_m = 1. / 1.3466e+27
-    eV_to_m = 1.602176634e-19 / 1.2102e+44
-    e_to_1 = 1.602176634e-19 / 5.2909e-19
-    s_to_m = 1. / 3.3356e-9
-    sol_to_m = 1.98855e+30 * kg_to_m
+    kg_to_m = 1. / mpmathify(1.3466e+27)
+    eV_to_m = mpmathify(1.602176634e-19) / mpmathify(1.2102e+44)
+    e_to_1 = mpmathify(1.602176634e-19) / mpmathify(5.2909e-19)
+    s_to_m = 1. / mpmathify(3.3356e-9)
+    sol_to_m = mpmathify(1.98855e+30) * kg_to_m
     
     line = True
     filePath = pathtohere / 'data/properties.txt'
@@ -47,73 +50,74 @@ def readPropertiesFile():
             if (line[:-1] == "# particle mass [double] [u]"):
                 line = f.readline()
                 i += 1;
-                particle.mass = kg_to_m*1.66053906892e-27*float(line)
+                particle.mass = kg_to_m*mpmathify(1.66053906892e-27)*mpmathify(line)
             elif (line[:-1] == "# particle epsilon [double] [meV]"):
                 line = f.readline()
                 i += 1;
-                particle.epsilon = eV_to_m*1e-3*float(line)
+                particle.epsilon = eV_to_m*1e-3*mpmathify(line)
             elif (line[:-1] == "# particle sigma [double] [nm]"):
                 line = f.readline()
                 i += 1;
-                particle.sigma = 1e-9*float(line)
+                particle.sigma = 1e-9*mpmathify(line)
             elif (line[:-1] == "# particle electric charge [double] [e]"):
                 line = f.readline()
                 i += 1
-                particle.charge = e_to_1*float(line)
+                particle.charge = e_to_1*mpmathify(line)
             elif (line[:-1] == "# particle start time [double] [s]"):
                 line = f.readline()
                 i += 1
-                startTime1 = s_to_m*float(line)
+                startTime1 = s_to_m*mpmathify(line)
             elif (line[:-1] == "# particle start radius [double] [Gm]"):
                 line = f.readline()
                 i += 1
-                startRadius1 = 1e+9*float(line)
+                startRadius1 = 1e+9*mpmathify(line)
             elif (line[:-1] == "# particle start phi [double] [rad]"):
                 line = f.readline()
                 i += 1
-                startPhi1 = float(line)
+                startPhi1 = mpmathify(line)
             elif (line[:-1] == "# particle start theta [double] [rad]"):
                 line = f.readline()
                 i += 1
-                startTheta1 = float(line)
+                startTheta1 = mpmathify(line)
+                
             elif (line[:-1] == "# particle r_dot0 [double] [ms^-1 / c]"):
                 line = f.readline()
                 i += 1
-                r_dot0 = float(line)
-            elif (line[:-1] == "# particle phi_dot0 [double] [rad s^-1]"):
+                r_dot0 = mpmathify(line)
+            elif (line[:-1] == "# particle r*sintheta*phi_dot0 [double] [ms^-1 / c]"):
                 line = f.readline()
                 i += 1
-                phi_dot0 = float(line)
-            elif (line[:-1] == "# particle theta_dot0 [double] [rad s^-1]"):
+                r_sintheta_phi_dot0 = mpmathify(line)
+            elif (line[:-1] == "# particle r*theta_dot0 [double] [ms^-1 / c]"):
                 line = f.readline()
                 i += 1
-                theta_dot0 = float(line)
+                r_theta_dot0 = mpmathify(line)
             elif (line[:-1] == "# particle dphi [double] [rad]"):
                 line = f.readline()
                 i += 1
-                dphi = float(line)
+                dphi = mpmathify(line)
             elif (line[:-1] == "# particle dr/moleculeLength [double]"):
                 line = f.readline()
                 i += 1
-                drCoeff = float(line)
+                drCoeff = mpmathify(line)
 
             # Black hole properties
             elif (line[:-1] == "# Black hole mass [double] [sol]"):
                 line = f.readline()
                 i += 1
-                BH.mass = sol_to_m*float(line)
+                BH.mass = sol_to_m*mpmathify(line)
             elif (line[:-1] == "# Black hole Kerr parameter (a) [double]"):
                 line = f.readline()
                 i += 1
-                BH.a = float(line)
+                BH.a = mpmathify(line)
             elif (line[:-1] == "# Black hole gravitomagnetic monopole moment (l) [double] [A m]"):
                 line = f.readline()
                 i += 1
-                BH.l = float(line)
+                BH.l = mpmathify(line)
             elif (line[:-1] == "# Black hole electric charge (Q) [double] [e]"):
                 line = f.readline()
                 i += 1
-                BH.charge = e_to_1*float(line)
+                BH.charge = e_to_1*mpmathify(line)
 
             elif (line == "\n" or line==''):
                 continue
@@ -126,7 +130,7 @@ def readPropertiesFile():
             if i >= maxFileSize:
                 raise Exception(f'Unsafe file size: number of lines exceeds {maxFileSize}.')
                 
-    moleculeLength = 1.12246204831 * particle.sigma # 2^1/6
+    moleculeLength = mpmathify(1.12246204831) * particle.sigma # 2^1/6
                 
                 
     return BH, particle, moleculeLength
