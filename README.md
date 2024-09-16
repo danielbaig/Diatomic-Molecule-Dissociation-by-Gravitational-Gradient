@@ -66,9 +66,30 @@ is the Lennard-Jones potential, where $\epsilon$ is the depth of the potential w
 * NumPy
 
 ## Running
-Firstly, run the .nb Mathematica file to generate the expressions in the .cpp file. Then run the 'Euler-Lagrange preconfigure.ipynb' file to compress the expressions and write the file in a form that can be evaluated. Next, run the .cpp main file given the same name as this project. Lastly, analyse your results using the 'Data Analysis.ipynb' file.
+Firstly, run the `.nb` Mathematica file to generate the expressions in the `.cpp` file. Then run the `Euler-Lagrange preconfigure.ipynb` file to compress the expressions and write the file in a form that can be evaluated. Next, run the `.cpp` main file given the same name as this project. Lastly, analyse your results using the `Data Analysis.ipynb` file.
 
-Attributes of the system can be changed using the properties.txt file in /data/.
+Attributes of the system can be changed using the `properties.txt` file in `/data/`.
+
+## Next Steps
+Modify the project so that a variety of variables can be sampled in one run to determine the structure of the parameter space that allows molecules to dissociate.
 
 
+By finding the velocities such that the molecules dissociate one should be able to combine this with data for the expected distribution of velocities $p(\vec{v})$ to obtain the probability of one molecule dissociating given a position in space $\vec{r}$ and orientation $\hat{\omega}$, which is the unit vector from one atom to the other. This probability would be expressed as
 
+$$
+P(\vec{r}, \hat{\omega}) = \int\limits_V d^3\vec{v} &#x202F p(\vec{v}) &#x202F,
+$$
+
+with
+
+$$
+V = \Big\\{\vec{v} \in  &#x211D^3 \Big{|} &#x202F |\vec{v}| < \delta_i(\hat{\omega}, \vec{r}) \cap |\vec{v}| > \delta_j(\hat{\omega}, \vec{r}) &#x202F ; &#x202F i \neq j \in \\{1,2\\} \Big\\} &#x202F,
+$$
+
+where $\delta_i(\hat{\omega}, \vec{r})$ is the velocity required for particle $i$ to escape. This can next be integrated over all orientations and all radii greater than the Schwarzschild radius while also including the number density profile with distance to the black hole. By differentiating with respect to the solid angle from the origin of the system one can obtain the differential number of dissociation events with respect to solid angle
+
+$$
+\frac{dN_{\text{diss}}}{d\Omega} = \int\limits_{r_s}^{\infty} dr &#x202F r^2 n(r) \int\limits_{S^2} d\omega &#x202F P(\vec{r}, \hat{\omega}) &#x202F.
+$$
+
+In principle, this could be used to obtain the number of expected dissociation events observed in any direction.
