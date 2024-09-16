@@ -16,8 +16,7 @@ epsilon_0 = 1. / (4.*np.pi) # Geometrised-Gaussian units
 
 
 
-def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray,
-                  isPrecise:bool=True, renderFull:bool=True):
+def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray, renderFull:bool=True):
     """
     Display the particle(')s(') motion through the system.
     
@@ -25,7 +24,7 @@ def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray,
         - BH: Instance of the black hole.
         - coords1:np.ndarray: History of the coordinates of particle 1.
         - coords2:np.ndarray: History of the coordinates of particle 2.
-        - isPrecise:bool: Whether to use the ultra precise measurements.
+        - renderFull:bool=True: Whether to render both particles.
     """
     
     r_Q2 = BH.charge*BH.charge / (4*np.pi*epsilon_0)
@@ -43,47 +42,42 @@ def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray,
     
     # Inner horizon
     r = r_s / 2. - np.sqrt(r_s*r_s / 4. - BH.a*BH.a - r_Q2)
-    ax.plot_surface(r * x, r * y, r * z, color='black', alpha=0.2)
+    ax.plot_surface(sqrt(r*r + BH.a*BH.a) * x, sqrt(r*r + BH.a*BH.a) * y,
+                    r * z, color='black', alpha=0.2)
     print(f'Inner horizon: {r}')
     # Outer horizon
     r = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a - r_Q2)
-    ax.plot_surface(r * x, r * y, r * z, color='m', alpha=0.2)
+    ax.plot_surface(sqrt(r*r + BH.a*BH.a) * x, sqrt(r*r + BH.a*BH.a) * y,
+                    r * z, color='m', alpha=0.2)
     print(f'Outer horizon: {r}')
     
     # Inner ergosphere
     r = r_s / 2. - np.sqrt(r_s*r_s / 4. - BH.a*BH.a*np.cos(theta)*np.cos(theta) - r_Q2)
-    ax.plot_surface(r[None,:] * x, r[None,:] * y, r[None,:] * z, color='cyan', alpha=0.2)
+    ax.plot_surface(np.sqrt(r*r + BH.a*BH.a)[None,:] * x,
+                    np.sqrt(r*r + BH.a*BH.a)[None,:] * y,
+                    r[None,:] * z, color='cyan', alpha=0.2)
     print(f'Inner ergosphere: [{r.min()},{r.max()}]')
     # Outer ergosphere
     r = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a*np.cos(theta)*np.cos(theta) - r_Q2)
-    ax.plot_surface(r[None,:] * x, r[None,:] * y, r[None,:] * z, color='yellow', alpha=0.2)
+    ax.plot_surface(np.sqrt(r*r + BH.a*BH.a)[None,:] * x,
+                    np.sqrt(r*r + BH.a*BH.a)[None,:] * y,
+                    r[None,:] * z, color='yellow', alpha=0.2)
     print(f'Outer ergosphere: [{r.min()},{r.max()}]')
     
-    if not isPrecise:
-        # Particle1 trajectory.
-        x1 = coords1[:,2] * np.sin(coords1[:,4]) * np.cos(coords1[:,3])
-        y1 = coords1[:,2] * np.sin(coords1[:,4]) * np.sin(coords1[:,3])
-        z1 = coords1[:,2] * np.cos(coords1[:,4])
+    # For compatability with mpmath.
+    x1 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * cos(c3) 
+                  for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
+    y1 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * sin(c3) 
+                  for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
+    z1 = np.array([c2 * cos(c4) 
+                  for c2, c4 in zip(coords1[:,2], coords1[:,4])], dtype=object)
 
-        # Particle2 trajectory.
-        x2 = coords2[:,2] * np.sin(coords2[:,4]) * np.cos(coords2[:,3])
-        y2 = coords2[:,2] * np.sin(coords2[:,4]) * np.sin(coords2[:,3])
-        z2 = coords2[:,2] * np.cos(coords2[:,4])
-        
-    else:
-        x1 = np.array([c2 * sin(c4) * cos(c3) 
-                      for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
-        y1 = np.array([c2 * sin(c4) * sin(c3) 
-                      for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
-        z1 = np.array([c2 * cos(c4) 
-                      for c2, c4 in zip(coords1[:,2], coords1[:,4])], dtype=object)
-        
-        x2 = np.array([c2 * sin(c4) * cos(c3) 
-                      for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
-        y2 = np.array([c2 * sin(c4) * sin(c3) 
-                      for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
-        z2 = np.array([c2 * cos(c4) 
-                      for c2, c4 in zip(coords2[:,2], coords2[:,4])], dtype=object)
+    x2 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * cos(c3) 
+                  for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
+    y2 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * sin(c3) 
+                  for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
+    z2 = np.array([c2 * cos(c4) 
+                  for c2, c4 in zip(coords2[:,2], coords2[:,4])], dtype=object)
         
     ax.scatter(x1,y1,z1, c='b', marker='.',s=1.)
     
@@ -106,38 +100,29 @@ def displaySystem(BH, coords1:np.ndarray, coords2:np.ndarray,
     plt.savefig(pathtohere / 'plots/system3D.png', bbox_inches='tight')
     plt.close(fig)
     
-def displayMolecule(coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True):
+def displayMolecule(BH, coords1:np.ndarray, coords2:np.ndarray):
     """
     Display the planar movement of the atoms in the molecule.
     
     Inputs:
+        - BH: Instance of the black hole.
         - coords1:np.ndarray: History of the coordinates of particle 1.
         - coords2:np.ndarray: History of the coordinates of particle 2.
-        - isPrecise:bool: Whether to use the ultra precise measurements.
     """
     
     fig = plt.figure(figsize=(6,6), dpi=150)
     ax = fig.add_subplot()
     
-    if not isPrecise:
-        # Particle1 trajectory.
-        x1 = coords1[:,2] * np.sin(coords1[:,4]) * np.cos(coords1[:,3])
-        y1 = coords1[:,2] * np.sin(coords1[:,4]) * np.sin(coords1[:,3])
+    # For compatability with mpmath.
+    x1 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * cos(c3) 
+                  for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
+    y1 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * sin(c3) 
+                  for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
 
-        # Particle2 trajectory.
-        x2 = coords2[:,2] * np.sin(coords2[:,4]) * np.cos(coords2[:,3])
-        y2 = coords2[:,2] * np.sin(coords2[:,4]) * np.sin(coords2[:,3])
-        
-    else:
-        x1 = np.array([c2 * sin(c4) * cos(c3) 
-                      for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
-        y1 = np.array([c2 * sin(c4) * sin(c3) 
-                      for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
-        
-        x2 = np.array([c2 * sin(c4) * cos(c3) 
-                      for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
-        y2 = np.array([c2 * sin(c4) * sin(c3) 
-                      for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
+    x2 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * cos(c3) 
+                  for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
+    y2 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * sin(c3) 
+                  for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
    
     COM = np.asarray([x1+x2, y1+y2]) / 2.
 
@@ -166,7 +151,7 @@ def displayMolecule(coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True)
     plt.close(fig)
     
     
-def displayCoordinateStats(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise:bool=True):
+def displayCoordinateStats(BH, coords1:np.ndarray, coords2:np.ndarray):
     """
     Display how each the coordinates changes for both particles.
    
@@ -174,7 +159,6 @@ def displayCoordinateStats(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise
         - BH: Instance of the black hole.
         - coords1:np.ndarray: History of the coordinates of particle 1.
         - coords2:np.ndarray: History of the coordinates of particle 2.
-        - isPrecise:bool: Whether to use the ultra precise measurements.
     """
     
     r_Q2 = BH.charge*BH.charge / (4*np.pi*epsilon_0)
@@ -195,11 +179,9 @@ def displayCoordinateStats(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecise
         
         ax.scatter(lambdas, coords[:,i] - offset, marker='.',c=colours[i])
         if i==1:
-            if not isPrecise:
-                r_erg = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a*np.cos(coords[:,3])*np.cos(coords[:,3]) - r_Q2)
-            else:
-                r_erg = r_s / 2. + np.array([sqrt(r_s*r_s / 4. - BH.a*BH.a*cos(c3)*cos(c3) - r_Q2)
-                      for c3 in coords[:,3]], dtype=object)
+            # For compatability with mpmath.
+            r_erg = r_s / 2. + np.array([sqrt(r_s*r_s / 4. - BH.a*BH.a*cos(c3)*cos(c3) - r_Q2)
+                  for c3 in coords[:,3]], dtype=object)
             
             r_eventHorizon = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a - r_Q2)
             
@@ -245,11 +227,9 @@ def displayPhaseSpace_phi_r(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecis
     ax.scatter(coords1[:,3], coords1[:,2] - offset, marker='.',c='b')
     ax.scatter(coords2[:,3], coords2[:,2] - offset, marker='.',c='g')
     
-    if not isPrecise:
-        r_erg = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a*np.cos(coords1[:,4])*np.cos(coords1[:,4]) - r_Q2)
-    else:
-        r_erg = r_s / 2. + np.array([sqrt(r_s*r_s / 4. - BH.a*BH.a*cos(c3)*cos(c3) - r_Q2)
-              for c3 in coords1[:,4]], dtype=object)
+    # For compatability with mpmath.
+    r_erg = r_s / 2. + np.array([sqrt(r_s*r_s / 4. - BH.a*BH.a*cos(c3)*cos(c3) - r_Q2)
+          for c3 in coords1[:,4]], dtype=object)
 
     r_eventHorizon = r_s / 2. + np.sqrt(r_s*r_s / 4. - BH.a*BH.a - r_Q2)
 
@@ -271,13 +251,14 @@ def displayPhaseSpace_phi_r(BH, coords1:np.ndarray, coords2:np.ndarray, isPrecis
     plt.close(fig)
     
     
-def displayMoleculeStats(coords1:np.ndarray, coords2:np.ndarray,
+def displayMoleculeStats(BH, coords1:np.ndarray, coords2:np.ndarray,
                          moleculeLength:float, isPrecise:bool=True):
     """
     Display how the moleculear angle and length vary.
     
     
     Inputs:
+        - BH: Instance of the black hole.
         - coords1:np.ndarray: History of the coordinates of particle 1.
         - coords2:np.ndarray: History of the coordinates of particle 2.
         - moleculeLength:float: The average molecule length.
@@ -285,60 +266,45 @@ def displayMoleculeStats(coords1:np.ndarray, coords2:np.ndarray,
     """
     
     
-    if not isPrecise:
-        # Particle1 trajectory.
-        x1 = coords1[:,2] * np.sin(coords1[:,4]) * np.cos(coords1[:,3])
-        y1 = coords1[:,2] * np.sin(coords1[:,4]) * np.sin(coords1[:,3])
-        z1 = coords1[:,2] * np.cos(coords1[:,4])
+    # For compatability with mpmath.
+    x1 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * cos(c3) 
+                  for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
+    y1 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * sin(c3) 
+                  for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
+    z1 = np.array([c2 * cos(c4) 
+                  for c2, c4 in zip(coords1[:,2], coords1[:,4])], dtype=object)
 
-        # Particle2 trajectory.
-        x2 = coords2[:,2] * np.sin(coords2[:,4]) * np.cos(coords2[:,3])
-        y2 = coords2[:,2] * np.sin(coords2[:,4]) * np.sin(coords2[:,3])
-        z2 = coords2[:,2] * np.cos(coords2[:,4])
-        
-    else:
-        x1 = np.array([c2 * sin(c4) * cos(c3) 
-                      for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
-        y1 = np.array([c2 * sin(c4) * sin(c3) 
-                      for c2, c4, c3 in zip(coords1[:,2], coords1[:,4], coords1[:,3])], dtype=object)
-        z1 = np.array([c2 * cos(c4) 
-                      for c2, c4 in zip(coords1[:,2], coords1[:,4])], dtype=object)
-        
-        x2 = np.array([c2 * sin(c4) * cos(c3) 
-                      for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
-        y2 = np.array([c2 * sin(c4) * sin(c3) 
-                      for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
-        z2 = np.array([c2 * cos(c4) 
-                      for c2, c4 in zip(coords2[:,2], coords2[:,4])], dtype=object)
+    x2 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * cos(c3) 
+                  for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
+    y2 = np.array([sqrt(c2*c2+BH.a*BH.a) * sin(c4) * sin(c3) 
+                  for c2, c4, c3 in zip(coords2[:,2], coords2[:,4], coords2[:,3])], dtype=object)
+    z2 = np.array([c2 * cos(c4) 
+                  for c2, c4 in zip(coords2[:,2], coords2[:,4])], dtype=object)
     
     COM = np.asarray([x1+x2, y1+y2, z1+z2]) / 2.
     delta = np.asarray([x2-x1, y2-y1, z2-z1])
     
-    
-    if not isPrecise:
-        angle = np.arccos((COM[0]*delta[0] + COM[1]*delta[1] + COM[2]*delta[2]) 
-                          / linalg.norm(COM, axis=0) / linalg.norm(delta, axis=0))
-        
-    else:
-        # Compute the dot product of COM and delta
-        dot_product = sum(c * d for c, d in zip(COM, delta))
-        
-        
-        # Compute the norms of COM and delta
-        norm_COM = np.array([sqrt(s) for s in sum(c*c for c in COM)], dtype=object)
-        norm_delta = np.array([sqrt(s) for s in sum(d*d for d in delta)], dtype=object)
-        
-        
-        # Compute the cosine argument
-        cos_argument = dot_product / (norm_COM * norm_delta)
 
-        # Compute the arccosine using mpmath.acos
-        # Ensure the value is within the valid range for acos
-        cos_argument = np.array([max(-1, m) for m in [min(1, n) for n in cos_argument]],
-                                dtype=object)  # Clamp value to [-1, 1]
+        
+    # Compute the dot product of COM and delta
+    dot_product = sum(c * d for c, d in zip(COM, delta))
 
-        # Calculate the angle in radians
-        angle = np.array([acos(a) for a in cos_argument], dtype=object)
+
+    # Compute the norms of COM and delta
+    norm_COM = np.array([sqrt(s) for s in sum(c*c for c in COM)], dtype=object)
+    norm_delta = np.array([sqrt(s) for s in sum(d*d for d in delta)], dtype=object)
+
+
+    # Compute the cosine argument
+    cos_argument = dot_product / (norm_COM * norm_delta)
+
+    # Compute the arccosine using mpmath.acos
+    # Ensure the value is within the valid range for acos
+    cos_argument = np.array([max(-1, m) for m in [min(1, n) for n in cos_argument]],
+                            dtype=object)  # Clamp value to [-1, 1]
+
+    # Calculate the angle in radians
+    angle = np.array([acos(a) for a in cos_argument], dtype=object)
     
     
     
@@ -357,11 +323,9 @@ def displayMoleculeStats(coords1:np.ndarray, coords2:np.ndarray,
     
     # Separation.
     ax = fig.add_subplot(2,1,2)
-    if not isPrecise:
-        ax.scatter(coords1[:,0], linalg.norm(delta,axis=0), c='lime', marker='.')
-    else:
-        separationOffset = min(norm_delta)
-        ax.scatter(coords1[:,0], norm_delta - separationOffset, c='lime', marker='.')
+
+    separationOffset = min(norm_delta)
+    ax.scatter(coords1[:,0], norm_delta - separationOffset, c='lime', marker='.')
     ax.grid()
     
     # Only include equilibrium line if it is passed.

@@ -30,3 +30,6 @@ https://arxiv.org/pdf/2206.02488
 
 BH Kerr parameter:
 https://arxiv.org/pdf/1306.2033
+
+No negative energy outside of a BH and escape velocities:
+Hussain S, Hussain I, Jamil M. Critical Escape Velocity of a Charged Particle Moving Around a Slowly Rotating Kerr Black Hole Immersed in Magnetic Field. arXiv preprint arXiv:1402.2731. 2014 Feb.

@@ -9,7 +9,7 @@
 # particle start time [double] [s]
 0.
 # particle start radius [double] [Gm]
-13.
+26.
 # particle start phi [double] [rad]
 0.
 # particle start theta [double] [rad]
@@ -18,7 +18,7 @@
 # particle r_dot0 [double] [ms^-1 / c]
 0.
 # particle r*sintheta*phi_dot0 [double] [ms^-1 / c]
-0.698650466364564918928
+0.976500972395012764915
 # particle r*theta_dot0 [double] [ms^-1 / c]
 0.
 

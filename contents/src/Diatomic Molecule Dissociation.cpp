@@ -292,10 +292,10 @@ int main()
 
 
     const BlackHole BH{ BH_mass, BH_a, BH_l, BH_charge };
-    Particle particle1{ mass, epsilon*1e-23, sigma0, -electricCharge, startTime1,
+    Particle particle1{ mass, epsilon, sigma0, -electricCharge, startTime1,
         startRadius1, startPhi1, startTheta1 };
 
-    Particle particle2{ mass, epsilon*1e-23, sigma0, +electricCharge, startTime1,
+    Particle particle2{ mass, epsilon, sigma0, +electricCharge, startTime1,
         startRadius1 + drCoeff*moleculeLength, startPhi1 + dphi, startTheta1 };
 
 
