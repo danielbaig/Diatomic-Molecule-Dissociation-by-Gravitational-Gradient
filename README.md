@@ -34,7 +34,7 @@ where $`q`$ is the particle's charge and $`m`$ is the particle's mass.
 
 The Lagrangian for the Lennard-Jones potential is given by
 ```math
-L_m = \frac{1}{m} V_{LJ} \beta\cdot x \,\,,
+L_m = \frac{1}{m} V_{LJ} \beta\cdot x' \,\,,
 ```
 where $`\beta`$ is the 4-velocity of the source, $`\cdot`$ is the Minkowski product and
 ```math
